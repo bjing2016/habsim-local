@@ -1,6 +1,6 @@
 import datetime
 import util
-
+import math
 
 '''
 A single instance of a profile and its associated trajectory.
@@ -31,6 +31,13 @@ class Prediction:
         if self.profile is not None:
             self.profile.setLaunchAlt(launchsite.elev)
 
+    
+    def split(self):
+        if self.trajectory == None:
+            raise Exception("No trajectory to split")
+        return [self.trajectory[self.indices[i]:self.indices[i+1]+1] \
+            for i in range(len(self.indices) - 1)]
+
     '''
     If no parameters are passed in, looks in instance fields.
     '''
@@ -57,10 +64,24 @@ class Prediction:
         rates, durs, coeffs = self.profile.segmentList()
         __, alts = self.profile.waypoints()
         
+        self.indices = list()
+
         for i in range(len(rates)):
-            self.trajectory.append(util.predict(time, lat, lon, alts[i], coeffs[i], self.model, rates[i], durs[i], self.step))
+            self.indices.append(len(self.trajectory))
+            newsegment = util.predict(time, lat, lon, alts[i], coeffs[i], self.model, rates[i], durs[i], self.step)
+            if alts[i] > 32000:
+                print("Warning: model inaccurate above 32km.")
+            self.trajectory.append(newsegment)
+            if len(newsegment) is not math.ceil(durs[i] * 3600 / self.step) + 1:
+                if i is len(rates)-1:
+                    print("Warning: early termination of last profile segment.")
+                else:
+                    print("Warning: flight terminated before last profile segment.")
+                    break
             time, lat, lon, __, __, __ = self.trajectory.endpoint()
-            
+        self.indices.append(len(self.trajectory))
+
+        return self
 
             # Warning: controlled profile interval is not multiple of simulation time step
 '''
@@ -95,19 +116,40 @@ class Trajectory:
     def duration(self):
         return (self.endpoint()[0] - self.startpoint()[0]) / 3600
 
+    def length(self):
+        res = 0
+        for i in range(len(self)-1):
+            u, v = util.angular_to_lin_distance(self[i][1], self[i+1][1], self[i][2], self[i+1][2])
+            res += math.sqrt(u**2 + v**2)
+        return res
+
+    def endtime(self):
+        timestamp = self.endpoint()[0]
+        return datetime.datetime.fromtimestamp(timestamp)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, key):
+        return self.data[key]
+
 class ControlledProfile:
-    def __init__(self, dur=None, interval=None, target=None, launchsite=None):
-        pass
+    def __init__(self, dur, interval, target=None, launchsite=None, waypoints=None):
+        self.dur = dur
+        self.interval = interval
+        self.target = target
+        self.launchsite = launchsite
+        self.waypoints = waypoints
+
+        if waypoints == None:
+            self.initializeRandom()
     
+    def initializeRandom(self):
+        pass
+
     def waypoints(self):
         pass
     
-    def setTarget(self, target):
-        pass
-
-    
-    
-
 
 '''
 A Profile object keeps track of a full flight profile for prediction.
@@ -160,12 +202,9 @@ class Profile:
                 if segment.type == "dur":
                     segment.stopalt = lastalt + (segment.dur * 3600 * segment.rate)
                 
-        if segment.stopalt != None:
-            if segment.stopalt < 0:
-                raise Exception("Profile inconsistency: altitude is negative.")
-            if segment.stopalt > 32000:
-                print("Warning: model inaccurate above 32km.")
-
+        if segment.stopalt != None and segment.stopalt < 0:
+            raise Exception("Profile inconsistency: altitude is negative.")
+            
         self.segments.append(segment)
 
 

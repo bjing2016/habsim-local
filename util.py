@@ -1,8 +1,10 @@
 import requests
 import json
+import math
 import urllib
 
 URL = "http://predict.stanfordssi.org"
+EARTH_RADIUS = 6371.0
 
 def checkElev(launchsite):
     return launchsite.elev > getElev(launchsite.coords)
@@ -28,5 +30,13 @@ def checkServer():
 def predict(timestamp, lat, lon, alt, drift_coeff, model, rate, dur, step):
     URL = 'https://predict.stanfordssi.org/singlepredict?&timestamp={}&lat={}&lon={}&alt={}&coeff={}&dur={}&step={}&model={}&rate={}'\
         .format(timestamp, lat, lon, alt, drift_coeff, dur, step, model, rate)
-    print(URL)
     return json.load(urllib.request.urlopen(URL))
+
+def windprofile(datetime, lat, lon):
+    pass
+
+
+def angular_to_lin_distance(lat1, lat2, lon1, lon2): 
+    v = math.radians(lat2 - lat1) * EARTH_RADIUS
+    u = math.radians(lon2 - lon1) * EARTH_RADIUS * math.cos(math.radians(lat1))
+    return u, v
