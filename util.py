@@ -65,10 +65,10 @@ def closestPoint(traj, target, interval=1, division=0.75):
 
     if start_dist < end_dist:
         end = math.floor(len(traj) * division)
-        return closestPoint(traj[:end])
+        return closestPoint(traj[:end], target, division=division)
     else:
-        start = math.ceil(len(traj) * (1-divison))
-        return closestPoint(traj[start:])
+        start = math.ceil(len(traj) * (1-division))
+        return closestPoint(traj[start:], target, division=division)
 
 
     

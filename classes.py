@@ -188,7 +188,7 @@ class ControlledProfile:
         rates = [(self[i+1] - self[i])/self.interval for i in range(len(self) - 1)]
         dur = [self.interval]*(len(self)-1)
         coeff = [1]*(len(self)-1)
-        return rate, dur, coeff
+        return rates, dur, coeff
 
     def __len__(self):
         return len(self.waypoints_data)
