@@ -1,6 +1,7 @@
 import datetime
-import util
+from . import util
 import math
+import random
 
 '''
 A single instance of a profile and its associated trajectory.
@@ -39,7 +40,9 @@ class Prediction:
             for i in range(len(self.indices) - 1)]
 
     '''
-    If no parameters are passed in, looks in instance fields.
+    If no parameters are passed in, looks in instance fields. The site passed in 
+    to the Prediction object will override the launch altitude, if any, set in the 
+    Profile object.
     '''
     def run(self, model=None, launchtime=None, launchsite=None, step=None):
         if step != None:
@@ -78,7 +81,7 @@ class Prediction:
                 else:
                     print("Warning: flight terminated before last profile segment.")
                     break
-            time, lat, lon, __, __, __ = self.trajectory.endpoint()
+            time, lat, lon = self.trajectory.endpoint()[:3]
         self.indices.append(len(self.trajectory))
 
         return self
@@ -98,11 +101,17 @@ class LaunchSite:
             self.elev = util.getElev(self.coords)
         elif not util.checkElev(self):
             raise Exception("Launch site cannot be underground.")
+    def __str__(self):
+        return "{}, ({},{}), {}".format(self.name, *self.coords, self.elev)
 
 
+'''
+Data must be a list of tuples. The tuple fields may be arbitrary, but the first four
+must be UNIX TIME, LAT, LON, ALT.
+'''
 class Trajectory:
-    def __init__(self):
-        self.data = list()
+    def __init__(self, data=list()):
+        self.data = data
 
     def append(self, new):
         self.data = self.data[:-1] + new
@@ -132,24 +141,64 @@ class Trajectory:
 
     def __getitem__(self, key):
         return self.data[key]
+    
+    def __str__(self):
+        return str(self.data)
 
+
+'''
+Series of altitude waypoints at regular intervals which define a controlled profile.
+Floating segments are not yet supported. 
+'''
 class ControlledProfile:
-    def __init__(self, dur, interval, target=None, launchsite=None, waypoints=None):
+    def __init__(self, dur, interval):
         self.dur = dur
         self.interval = interval
-        self.target = target
-        self.launchsite = launchsite
-        self.waypoints = waypoints
-
-        if waypoints == None:
-            self.initializeRandom()
     
-    def initializeRandom(self):
-        pass
+    '''
+    Initializes a list of waypoints beginning with seed, and then performing a Gaussian
+    random walk with std.dev step bounded in [lower, upper]
+    '''
+    def initializeRandom(self, step, lower, upper, seed=[]):
+        self.waypoints_data = seed
+        i = len(self)
+        while (i < math.ceil(self.dur / self.interval) + 1):
+            self.waypoints_data.append(self[-1] + step*random.gauss(0,1))
+            if self[i] < lower:
+                self[i] = lower
+            elif self[i] > upper:
+                self[i] = upper
+            i += 1
 
+    '''
+    Trims the profile such that any waypoints, starting with index start,
+    below lower or above upper are reassigned to be equal to lower and upper, respecitively.
+    '''
+    def limit(self, lower, upper, start):
+        for i in range(start, len(self)):
+            if self[i] < lower:
+                self[i] = lower
+            elif self[i] > upper:
+                self[i] = upper
+    
     def waypoints(self):
-        pass
-    
+        return [self.interval * i for i in range(len(self))], self.waypoints_data
+
+    def segmentList(self):
+        rates = [(self[i+1] - self[i])/self.interval for i in range(len(self) - 1)]
+        dur = [self.interval]*(len(self)-1)
+        coeff = [1]*(len(self)-1)
+        return rate, dur, coeff
+
+    def __len__(self):
+        return len(self.waypoints_data)
+
+    def __getitem__(self, key):
+        return self.waypoints_data[key]
+
+    def __setitem__(self, key, item):
+        self.waypoints_data[key] = item
+
 
 '''
 A Profile object keeps track of a full flight profile for prediction.
@@ -264,3 +313,14 @@ class Segment:
             return '{}, Rate:{}, Type:alt, Stopalt:{}, Coeff:{} (Dur:{})'.format(self.name, self.rate, self.stopalt, self.coeff, self.dur)
         else:
             return '{}, Rate:{}, Type:dur, Dur:{}, Coeff:{} (Stopalt:{})'.format(self.name, self.rate, self.dur, self.coeff, self.stopalt)
+
+class StaticTarget():
+    def __init__(self, lat, lon):
+        self.lat = lat
+        self.lon = lon
+    
+    def location(self, time):
+        return self.lat, self.lon
+
+class MovingTarget():
+    NotImplemented
