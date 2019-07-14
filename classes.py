@@ -2,6 +2,7 @@ import datetime
 from . import util
 import math
 import random
+import bisect
 
 '''
 A single instance of a profile and its associated trajectory.
@@ -334,4 +335,18 @@ class StaticTarget():
         return self.lat, self.lon
 
 class MovingTarget():
-    NotImplemented
+    def __init__(self, times, lats, lons):
+        self.times = times
+        self.lats = lats
+        self.lons = lons
+    
+    def location(self, time):
+        if time >= self.times[-1]:
+            except("Target location not specified at trajectory end time.")
+        elif time < self.times[0]:
+            except("Target location not specified at launch time.")
+        idx = bisect.bisect_left(self.times, time)
+        mod = (time-times[idx])/(times[idx+1]-times[idx])
+        lat = (1-mod) * lat[idx] + mod * lat[idx+1]
+        lon = (1-mod) * lon[idx] + mod * lon[idx+1]
+        return lat, lon
