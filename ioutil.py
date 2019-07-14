@@ -1,4 +1,27 @@
-def get_html_path_string(path_cache, color, counter):
+import random
+import math
+class RandomColorGenerator:
+    def __init__(self):
+        pass
+        
+    def __getitem__(self, key):
+        red, green, blue = random.choices(["00", "33", "66", "99", "CC"], k=3)
+        return '#' + red + green + blue
+
+    def __len__(self):
+        return 10 ** 10
+
+def get_html_marker_string(lat, lon, label, title):
+        return '''var marker = new google.maps.Marker({
+                position: {lat: ''' + str(lat)+''', lng: ''' + str(lon) + '''},
+                label: " ''' + label + ''' ",
+                title:" ''' + title + ''' "
+            });
+            // To add the marker to the map, call setMap();
+            marker.setMap(map);
+        '''
+
+def get_html_path_string(path_cache, color, counter, weight=2):
     string =  "var flightPlanCoordinates" + str(counter) + " = [ \n"
     for pair in path_cache:
         string = string + "{lat: " + str(pair[1]) + ", lng: " + str(pair[2]) + "},\n"
@@ -9,12 +32,10 @@ def get_html_path_string(path_cache, color, counter):
           geodesic: true,
           strokeColor: '""" + color + """',
           strokeOpacity: 1.0,
-          strokeWeight: 2
+          strokeWeight: """ + str(weight) + """
         });
 
         flightPath"""+str(counter) + """.setMap(map);"""
-    
-    counter = counter + 1
     return string
 
 default_colors = ["#000000", "#FF0000", "#008000", "#800000", "#808000"]
@@ -24,21 +45,25 @@ class webplot:
         self.pathstring = ""
         self.counter = 0
 
-    def add(self, trajectories, colors = default_colors):
+    def add(self, trajectories, colors = default_colors, weight=2):
         if len(trajectories) > len(colors):
-            raise Exception("Please specify colors")
+            raise Exception("Longest trajectory longer than number of colors.")
         
         for i in range(len(trajectories)):
-            self.pathstring += get_html_path_string(trajectories[i], colors[i], self.counter)
+            self.pathstring += get_html_path_string(trajectories[i], colors[i], self.counter, weight)
             self.counter += 1
 
-    def origin(self, lat, lon):
+    def marker(self, lat, lon, label="", title=""):
+        self.pathstring += get_html_marker_string(lat, lon, label, title)
+
+    def origin(self, lat, lon, zoom=7):
         self.slat = lat
         self.slon = lon
+        self.zoom = zoom
     
     def save(self, name):
         f = open(name, "w")
-        f.write(part1 + str(self.slat) + "," + str(self.slon))
+        f.write(part1 + str(self.slat) + "," + str(self.slon) + "),zoom:" + str(self.zoom))
         f.write(part2)
         f.write(self.pathstring)
         f.write(part3short)
@@ -74,8 +99,7 @@ part1 = '''
             var map = new google.maps.Map(element, {
                 center: new google.maps.LatLng('''
                 
-part2 = ''' ),
-                zoom: 9,
+part2 = ''' ,
                 mapTypeId: "OSM",      
             });
             google.maps.event.addListener(map, 'click', function (event) {

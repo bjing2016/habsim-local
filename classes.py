@@ -45,6 +45,7 @@ class Prediction:
     Profile object.
     '''
     def run(self, model=None, launchtime=None, launchsite=None, step=None):
+        self.trajectory = Trajectory()
         if step != None:
             self.step = step
         if launchtime != None:
@@ -69,11 +70,15 @@ class Prediction:
         
         self.indices = list()
 
+        if type(self.profile) == ControlledProfile:
+            if (self.profile.interval * 3600) % self.step != 0:
+                raise Exception("Simulation step must evenly divide ControlledProfile interval.")
+
         for i in range(len(rates)):
             self.indices.append(len(self.trajectory))
             newsegment = util.predict(time, lat, lon, alts[i], coeffs[i], self.model, rates[i], durs[i], self.step)
-            if alts[i] > 32000:
-                print("Warning: model inaccurate above 32km.")
+            if alts[i] > 31000:
+                print("Warning: model inaccurate above 31km.")
             self.trajectory.append(newsegment)
             if len(newsegment) is not math.ceil(durs[i] * 3600 / self.step) + 1:
                 if i is len(rates)-1:
@@ -159,7 +164,7 @@ class ControlledProfile:
     Initializes a list of waypoints beginning with seed, and then performing a Gaussian
     random walk with std.dev step bounded in [lower, upper]
     '''
-    def initializeRandom(self, step, lower, upper, seed=[]):
+    def initialize(self, step, lower, upper, seed=[]):
         self.waypoints_data = seed
         i = len(self)
         while (i < math.ceil(self.dur / self.interval) + 1):
@@ -185,11 +190,14 @@ class ControlledProfile:
         return [self.interval * i for i in range(len(self))], self.waypoints_data
 
     def segmentList(self):
-        rates = [(self[i+1] - self[i])/self.interval for i in range(len(self) - 1)]
+        rates = [(self[i+1] - self[i])/self.interval/3600 for i in range(len(self) - 1)]
         dur = [self.interval]*(len(self)-1)
         coeff = [1]*(len(self)-1)
         return rates, dur, coeff
 
+    def setLaunchAlt(self, alt):
+        self[0] = alt
+    
     def __len__(self):
         return len(self.waypoints_data)
 
@@ -198,6 +206,9 @@ class ControlledProfile:
 
     def __setitem__(self, key, item):
         self.waypoints_data[key] = item
+
+    def __str__(self):
+        return str(self.waypoints_data)
 
 
 '''

@@ -2,6 +2,7 @@ import requests
 import json
 import math
 import urllib
+import os
 
 URL = "http://predict.stanfordssi.org"
 EARTH_RADIUS = 6371.0
@@ -30,12 +31,7 @@ def checkServer():
 def predict(timestamp, lat, lon, alt, drift_coeff, model, rate, dur, step):
     URL = 'https://predict.stanfordssi.org/singlepredict?&timestamp={}&lat={}&lon={}&alt={}&coeff={}&dur={}&step={}&model={}&rate={}'\
         .format(timestamp, lat, lon, alt, drift_coeff, dur, step, model, rate)
-    print(URL)
     return json.load(urllib.request.urlopen(URL))
-
-def wind(datetime, lat, lon, alt, model):
-    pass
-
 
 def angular_to_lin_distance(lat1, lat2, lon1, lon2): 
     v = math.radians(lat2 - lat1) * EARTH_RADIUS
@@ -48,15 +44,14 @@ and a target. First, points are taken from the trajectory at a user-defined inte
 is [start, end]. If start is closer, the new range is [start, start + division * (end-start)], and vice versa.
 The search continues until a single point is reached.
 
-Returns the point, but not the distance or bearing.
+Returns the point, distance, and bearing
 '''
 def closestPoint(traj, target, interval=1, division=0.75):
     traj = traj[::interval]
     if len(traj) == 1:
-        return traj[0]
+        return traj[0], haversine(*traj[0][1:3], *target.location(traj[0][0])), bearing(*traj[0][1:3], *target.location(traj[0][0]))
     slat, slon = traj[0][1:3]
     elat, elon = traj[-1][1:3]
-
     stlat, stlon = target.location(traj[0][0])
     etlat, etlon = target.location(traj[-1][0])
 
@@ -70,17 +65,14 @@ def closestPoint(traj, target, interval=1, division=0.75):
         start = math.ceil(len(traj) * (1-division))
         return closestPoint(traj[start:], target, division=division)
 
-
-    
-
 def haversine(lat1, lon1, lat2, lon2):
     lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
 
     dlat = lat2-lat1
     dlon = lon2-lon1
 
-    a = math.sin(dlat/2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon)**2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt((1-a)))
+    a = math.sin(dlat/2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
 
     return EARTH_RADIUS * c
     '''
@@ -113,3 +105,19 @@ def bearing(lat1, lon1, lat2, lon2):
         Math.sin(φ1)*Math.cos(φ2)*Math.cos(λ2-λ1);
     var brng = Math.atan2(y, x).toDegrees();
     '''
+
+def optimize_step(pred, target, alpha):
+    closest, distance, bearing = closestPoint(pred.trajectory, target)
+    vectoru = distance * math.sin(math.radians(bearing))
+    vectorv = distance * math.cos(math.radians(bearing))
+
+    prof = pred.profile
+    steps_per_interval = int(prof.interval * 3600 / pred.step)
+    for i in range(1, len(prof)):
+        du, dv = pred.trajectory[i * steps_per_interval][-2:]
+        prof[i] += alpha * (vectoru * du + vectorv * dv)
+    
+    return closest, distance, bearing
+
+
+    
