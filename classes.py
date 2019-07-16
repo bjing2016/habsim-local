@@ -59,7 +59,9 @@ class Prediction:
             raise Exception("Profile not specified.")
         if self.launchsite == None:
             raise Exception("Launchsite not specified.")
-        if self.model < 1 or self.model > 20:
+        if self.launchtime == None:
+            raise Exception("Launchtime not specified.")
+        if self.model == None or self.model < 1 or self.model > 20:
             raise Exception("Model not specified or invalid.")
         self.profile.setLaunchAlt(self.launchsite.elev)
 
@@ -335,6 +337,9 @@ class StaticTarget():
         return self.lat, self.lon
 
 class MovingTarget():
+    '''
+    Pass in times in the format of timestamps in the Trajectory (usually UNIX).
+    '''
     def __init__(self, times, lats, lons):
         self.times = times
         self.lats = lats
@@ -342,9 +347,9 @@ class MovingTarget():
     
     def location(self, time):
         if time >= self.times[-1]:
-            except("Target location not specified at trajectory end time.")
+            raise Exception("Target location not specified at trajectory end time.")
         elif time < self.times[0]:
-            except("Target location not specified at launch time.")
+            raise Exception("Target location not specified at launch time.")
         idx = bisect.bisect_left(self.times, time)
         mod = (time-times[idx])/(times[idx+1]-times[idx])
         lat = (1-mod) * lat[idx] + mod * lat[idx+1]

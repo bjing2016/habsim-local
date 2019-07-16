@@ -1,9 +1,7 @@
 # habsim_client
 Objected oriented interface and accession utilities to HABSIM
 
-## Todo
-class MovingTarget
-
+## Documentation in progress
 class Segment
 class Profile
 class Prediction
@@ -13,3 +11,6 @@ class Trajectory
 class ControlledProfile
 class StaticTarget
 class MovingTarget
+
+class WebPlot
+class RandomColorGenerator

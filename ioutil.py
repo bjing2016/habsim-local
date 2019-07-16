@@ -40,7 +40,7 @@ def get_html_path_string(path_cache, color, counter, weight=2):
 
 default_colors = ["#000000", "#FF0000", "#008000", "#800000", "#808000"]
 
-class webplot:
+class WebPlot:
     def __init__(self):
         self.pathstring = ""
         self.counter = 0
