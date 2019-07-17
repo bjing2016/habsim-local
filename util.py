@@ -12,7 +12,7 @@ def checkElev(launchsite):
 
 def getElev(coords):
     lat, lon = coords
-    elev = requests.get(URL + "/elev?lat={}&lon={}".format(lat, lon)).text
+    elev = requests.get(URL + f"/elev?lat={lat}&lon={lon}").text
     return float(elev)
 
 def whichgefs():
@@ -106,7 +106,7 @@ def bearing(lat1, lon1, lat2, lon2):
     var brng = Math.atan2(y, x).toDegrees();
     '''
 
-def optimize_step(pred, target, alpha):
+def optimize_step(pred, target, alpha, decreasing_weights=False):
     closest, distance, bearing = closestPoint(pred.trajectory, target)
     vectoru = distance * math.sin(math.radians(bearing))
     vectorv = distance * math.cos(math.radians(bearing))
@@ -115,7 +115,7 @@ def optimize_step(pred, target, alpha):
     steps_per_interval = int(prof.interval * 3600 / pred.step)
     for i in range(1, len(prof)):
         du, dv = pred.trajectory[i * steps_per_interval][-2:]
-        prof[i] += alpha * (vectoru * du + vectorv * dv)
+        prof[i] += alpha * (vectoru * du + vectorv * dv) * ((len(prof) - i) if decreasing_weights else 1)
     
     return closest, distance, bearing
 

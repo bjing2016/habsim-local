@@ -110,7 +110,7 @@ class LaunchSite:
         elif not util.checkElev(self):
             raise Exception("Launch site cannot be underground.")
     def __str__(self):
-        return "{}, ({},{}), {}".format(self.name, *self.coords, self.elev)
+        return f"{self.name}, {self.coords}, {self.elev}"
 
 
 '''
@@ -296,7 +296,7 @@ class Profile:
         return self.segments[key]
 
     def __str__(self):
-        res = "Launch alt:{}\n".format(self.launchalt)
+        res = f"Launch alt:{self.launchalt}\n"
         for i in range(len(self)):
             res += str(self[i]) + "\n"
         return res[:-1]
@@ -324,9 +324,9 @@ class Segment:
         self.coeff = coeff
     def __str__(self):
         if self.type == "alt":
-            return '{}, Rate:{}, Type:alt, Stopalt:{}, Coeff:{} (Dur:{})'.format(self.name, self.rate, self.stopalt, self.coeff, self.dur)
+            return f'{self.name}, Rate:{self.rate}, Type:alt, Stopalt:{self.stopalt}, Coeff:{self.coeff} (Dur:{self.dur})'
         else:
-            return '{}, Rate:{}, Type:dur, Dur:{}, Coeff:{} (Stopalt:{})'.format(self.name, self.rate, self.dur, self.coeff, self.stopalt)
+            return f'{self.name}, Rate:{self.rate}, Type:dur, Dur:{self.dur}, Coeff:{self.coeff} (Stopalt:{self.stopalt})'
 
 class StaticTarget():
     def __init__(self, lat, lon):
@@ -351,7 +351,7 @@ class MovingTarget():
         elif time < self.times[0]:
             raise Exception("Target location not specified at launch time.")
         idx = bisect.bisect_left(self.times, time)
-        mod = (time-times[idx])/(times[idx+1]-times[idx])
-        lat = (1-mod) * lat[idx] + mod * lat[idx+1]
-        lon = (1-mod) * lon[idx] + mod * lon[idx+1]
+        mod = (time-self.times[idx])/(self.times[idx+1]-self.times[idx])
+        lat = (1-mod) * self.lats[idx] + mod * self.lats[idx+1]
+        lon = (1-mod) * self.lons[idx] + mod * self.lons[idx+1]
         return lat, lon
