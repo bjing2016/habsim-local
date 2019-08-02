@@ -1,6 +1,10 @@
 import random
 import math
 class RandomColorGenerator:
+    '''
+    Generates random web-compatible colors.
+    Can be accessed like a list.
+    '''
     def __init__(self):
         pass
         
@@ -12,16 +16,22 @@ class RandomColorGenerator:
         return 10 ** 10
 
 def get_html_marker_string(lat, lon, label, title):
-        return '''var marker = new google.maps.Marker({
-                position: {lat: ''' + str(lat)+''', lng: ''' + str(lon) + '''},
-                label: " ''' + label + ''' ",
-                title:" ''' + title + ''' "
-            });
-            // To add the marker to the map, call setMap();
-            marker.setMap(map);
-        '''
+    '''
+    Internal method. Do not use.
+    '''
+    return '''var marker = new google.maps.Marker({
+            position: {lat: ''' + str(lat)+''', lng: ''' + str(lon) + '''},
+            label: " ''' + label + ''' ",
+            title:" ''' + title + ''' "
+        });
+        // To add the marker to the map, call setMap();
+        marker.setMap(map);
+    '''
 
 def get_html_path_string(path_cache, color, counter, weight=2):
+    '''
+    Internal method. Do not use.
+    '''
     string =  "var flightPlanCoordinates" + str(counter) + " = [ \n"
     for pair in path_cache:
         string = string + "{lat: " + str(pair[1]) + ", lng: " + str(pair[2]) + "},\n"
@@ -39,13 +49,20 @@ def get_html_path_string(path_cache, color, counter, weight=2):
     return string
 
 default_colors = ["#000000", "#FF0000", "#008000", "#800000", "#808000"]
-
 class WebPlot:
+    '''
+    A WebPlot writes an HTML file where trajectories can be viewed in an OpenStreetMap interface.
+    '''
     def __init__(self):
         self.pathstring = ""
         self.counter = 0
 
     def add(self, trajectories, colors = default_colors, weight=2):
+        '''
+        Adds a list of trajectories. If list is longer than 5, colors must be specified.
+        Whenever this method is called, the list of colors is used from the beginning.
+        Therefore passing in segments seperately is not the same as passing in a list.
+        '''
         if len(trajectories) > len(colors):
             raise Exception("Longest trajectory longer than number of colors.")
         
@@ -54,14 +71,23 @@ class WebPlot:
             self.counter += 1
 
     def marker(self, lat, lon, label="", title=""):
+        '''
+        Adds a marker with a visible label and a title shown upon mouseover.
+        '''
         self.pathstring += get_html_marker_string(lat, lon, label, title)
 
     def origin(self, lat, lon, zoom=7):
+        '''
+        Sets the origin of the plot. Must be called.
+        '''
         self.slat = lat
         self.slon = lon
         self.zoom = zoom
     
     def save(self, name):
+        '''
+        Writes file to disk.
+        '''
         f = open(name, "w")
         f.write(part1 + str(self.slat) + "," + str(self.slon) + "),zoom:" + str(self.zoom))
         f.write(part2)

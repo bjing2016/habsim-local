@@ -38,15 +38,17 @@ def angular_to_lin_distance(lat1, lat2, lon1, lon2):
     u = math.radians(lon2 - lon1) * EARTH_RADIUS * math.cos(math.radians(lat1))
     return u, v
 
-'''
-Implements a modified binary search algorithm to find the closest point between a trajectory
-and a target. First, points are taken from the trajectory at a user-defined interval. Then the search range
-is [start, end]. If start is closer, the new range is [start, start + division * (end-start)], and vice versa.
-The search continues until a single point is reached.
-
-Returns the point, distance, and bearing
-'''
 def closestPoint(traj, target, interval=1, division=0.75):
+
+    '''
+    Implements a modified binary search algorithm to find the closest point between a trajectory
+    and a target. First, points are taken from the trajectory at a user-defined interval. Then the search range
+    is [start, end]. If start is closer, the new range is [start, start + division * (end-start)], and vice versa.
+    The search continues until a single point is reached.
+
+    Returns the point, distance, and bearing
+    '''
+
     traj = traj[::interval]
     if len(traj) == 1:
         return traj[0], haversine(*traj[0][1:3], *target.location(traj[0][0])), bearing(*traj[0][1:3], *target.location(traj[0][0]))
@@ -118,6 +120,3 @@ def optimize_step(pred, target, alpha, decreasing_weights=False):
         prof[i] += alpha * (vectoru * du + vectorv * dv) * ((len(prof) - i) if decreasing_weights else 1)
     
     return closest, distance, bearing
-
-
-    
