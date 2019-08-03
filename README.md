@@ -1,4 +1,4 @@
-# habsim_client
+# HABSIM
 Objected oriented interface and accession utilities to HABSIM
 
 ## Documentation in progress

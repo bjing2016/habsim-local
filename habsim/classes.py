@@ -49,6 +49,8 @@ class Prediction:
         If no parameters are passed in, looks in instance fields. The site passed in 
         to the Prediction object will override the launch altitude, if any, set in the 
         Profile object.
+
+        The Trajectory will be stored in the Preidction object as its Trajectory field. Returns self (the Prediction object).
         '''
         self.trajectory = Trajectory()
         if step != None:
@@ -150,7 +152,7 @@ class Trajectory:
 
     def length(self):
         '''
-        Distance travelled by trajectory.
+        Distance travelled by trajectory in km.
         '''
         res = 0
         for i in range(len(self)-1):
@@ -160,7 +162,7 @@ class Trajectory:
 
     def endtime(self):
         '''
-        Datetime of trajectory end point.
+        Datetime of trajectory end point in local time zone.
         '''
         timestamp = self.endpoint()[0]
         return datetime.datetime.fromtimestamp(timestamp)
