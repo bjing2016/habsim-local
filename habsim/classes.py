@@ -15,7 +15,7 @@ class Prediction:
         '''
         Prediction objects keep track of their associated profile,
         the model number (1-20) they are based on,
-        a launchtime, a launchsite, and a simulation step size in seconds.
+        a launchtime as a datetime object, a LaunchSite, and a simulation step size in seconds.
         '''
         self.trajectory = Trajectory()
         self.model = model

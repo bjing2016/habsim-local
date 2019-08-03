@@ -3,22 +3,35 @@ import json
 import math
 import urllib
 import os
+from datetime import datetime, timezone
 
 URL = "http://predict.stanfordssi.org"
 EARTH_RADIUS = 6371.0
 
 def checkElev(launchsite):
+    '''
+    Returns true if the launch site is above ground. Only works in areas which have elevation data.
+    '''
     return launchsite.elev > getElev(launchsite.coords)
 
 def getElev(coords):
+    '''
+    Fetches ground elevation from the server. Pass in a tuple (lat, lon)
+    '''
     lat, lon = coords
     elev = requests.get(URL + f"/elev?lat={lat}&lon={lon}").text
     return float(elev)
 
 def whichgefs():
+    '''
+    Returns GEFS run timestamp
+    '''
     return requests.get(url=URL+"/which").text
     
 def checkServer():
+    '''
+    Checks server status. This should be called before accessing the API.
+    '''
     which = whichgefs()
     if which == "Unavailable":        
         print("Server live. Wind data temporarily unavailable.")
@@ -29,11 +42,17 @@ def checkServer():
             print(status)
 
 def predict(timestamp, lat, lon, alt, drift_coeff, model, rate, dur, step):
+    '''
+    You should not need to call this method. Use the Prediction class instead.
+    '''
     URL = 'https://predict.stanfordssi.org/singlepredict?&timestamp={}&lat={}&lon={}&alt={}&coeff={}&dur={}&step={}&model={}&rate={}'\
         .format(timestamp, lat, lon, alt, drift_coeff, dur, step, model, rate)
     return json.load(urllib.request.urlopen(URL))
 
 def angular_to_lin_distance(lat1, lat2, lon1, lon2): 
+    '''
+    Returns distance between two points in km based on Euclian approximation.
+    '''
     v = math.radians(lat2 - lat1) * EARTH_RADIUS
     u = math.radians(lon2 - lon1) * EARTH_RADIUS * math.cos(math.radians(lat1))
     return u, v
@@ -68,6 +87,9 @@ def closestPoint(traj, target, interval=1, division=0.75):
         return closestPoint(traj[start:], target, division=division)
 
 def haversine(lat1, lon1, lat2, lon2):
+    '''
+    Returns great circle distance between two points.
+    '''
     lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
 
     dlat = lat2-lat1
@@ -93,6 +115,9 @@ def haversine(lat1, lon1, lat2, lon2):
     '''
 
 def bearing(lat1, lon1, lat2, lon2):
+    '''
+    Returns compass bearing from point 1 to point 2.
+    '''
     lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
     dlon = lon2-lon1
 
@@ -109,6 +134,12 @@ def bearing(lat1, lon1, lat2, lon2):
     '''
 
 def optimize_step(pred, target, alpha, decreasing_weights=False):
+    '''
+    Optimizes a trajectory to become closer to a target. Alpha is the gradient descent step size.
+    The gradient is multipled by the absolute distance to make convergence more likely.
+    If decreasing_weights is True, points earlier in the trajectory are moved more.
+    However, the scale for alpha is different, so be careful when toggling the flag.
+    '''
     closest, distance, bearing = closestPoint(pred.trajectory, target)
     vectoru = distance * math.sin(math.radians(bearing))
     vectorv = distance * math.cos(math.radians(bearing))
@@ -120,3 +151,41 @@ def optimize_step(pred, target, alpha, decreasing_weights=False):
         prof[i] += alpha * (vectoru * du + vectorv * dv) * ((len(prof) - i) if decreasing_weights else 1)
     
     return closest, distance, bearing
+
+gefs_layers = [30782, 26386, 23815, 20576, 18442, \
+            16180, 13608, 11784, 10363, 9164, 8117, 7186, 6344, \
+            5575, 4865, 4206, 3591, 3012, 2466, 1949, 1457, \
+            989, 762, 540, 323, 111]
+
+def average_wind(time, lat, lon, alt):
+    '''
+    Pass in a datetime object, lat, lon, alt.
+    Averages wind from all 20 model runs by computing the average vector magnitude,
+    then the average vector direction by summing all vectors.
+    '''
+    time = time.timestamp()
+    time = datetime.utcfromtimestamp(time)
+    URL = 'https://predict.stanfordssi.org/windensemble?&yr={}&mo={}&day={}&hr={}&mn={}&lat={}&lon={}&alt={}'\
+        .format(time.year, time.month, time.day, time.hour, time.minute, lat, lon, alt)
+    tmp = urllib.request.urlopen(URL)
+    ulist, vlist, __, __ = list(json.load(tmp))
+    winds = list(zip(ulist, vlist))
+    magnitudes = list(map(lambda x: math.sqrt(x[0]**2 + x[1]**2), winds))
+    magnitude = sum(magnitudes)/20
+    usum, vsum = sum(ulist), sum(vlist)
+    normalizer = math.sqrt(usum**2 + vsum**2)
+    udir, vdir = usum/normalizer, vsum/normalizer
+    return magnitude * udir, magnitude * vdir
+
+
+def wind(time, lat, lon, alt, model):
+    '''
+    Pass in a datetime object, lat, lon, alt, and model number.
+    Returns a list [u-wind, v-wind, du/dh, dv/dh]
+    '''
+    time = time.timestamp()
+    time = datetime.utcfromtimestamp(time)
+    URL = 'https://predict.stanfordssi.org/wind?&yr={}&mo={}&day={}&hr={}&mn={}&lat={}&lon={}&alt={}&model={}'\
+        .format(time.year, time.month, time.day, time.hour, time.minute, lat, lon, alt, model)
+    tmp = urllib.request.urlopen(URL)
+    return list(json.load(tmp))
