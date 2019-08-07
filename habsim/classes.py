@@ -106,17 +106,13 @@ class LaunchSite:
     The elevation is ground elevation by default,
     but may be specified to be higher.
     ''' 
-    def __init__(self, coords, elev=None, name=None):
-        self.name = name
+    def __init__(self, coords, elev=None):
         self.coords = coords
         self.elev = elev
         if self.elev == None:
             self.elev = util.getElev(self.coords)
         elif not util.checkElev(self):
             raise Exception("Launch site cannot be underground.")
-    def __str__(self):
-        return f"{self.name}, {self.coords}, {self.elev}"
-
 
 class Trajectory:
     '''
@@ -259,12 +255,11 @@ class Profile:
     equilibration, or floating (marine anchor).
     '''
 
-    def __init__(self, segments=None, name=None, launchalt=None):
+    def __init__(self, segments=None, launchalt=None):
         self.segments = list()
         if segments != None:
             for i in range(len(segments)):
                 self.append(segments[i])
-        self.name = name
         self.launchalt = launchalt
         if self.launchalt != None:
             self.setLaunchAlt(launchalt)
@@ -355,7 +350,7 @@ class Segment:
     marine anchor segments.
     '''
 
-    def __init__(self, rate, dur=None, stopalt=None, name=None, coeff=1):
+    def __init__(self, rate, dur=None, stopalt=None, coeff=1):
         if stopalt == None and dur == None:
             raise Exception("A duration or a stopping altitude must be specified.")
         if stopalt != None and dur != None:
@@ -366,13 +361,12 @@ class Segment:
         self.type = "dur" if dur else "alt"
         self.dur = dur
         self.stopalt = stopalt
-        self.name = name
         self.coeff = coeff
     def __str__(self):
         if self.type == "alt":
-            return f'{self.name}, Rate:{self.rate}, Type:alt, Stopalt:{self.stopalt}, Coeff:{self.coeff} (Dur:{self.dur})'
+            return f'Rate:{self.rate}, Type:alt, Stopalt:{self.stopalt}, Coeff:{self.coeff} (Dur:{self.dur})'
         else:
-            return f'{self.name}, Rate:{self.rate}, Type:dur, Dur:{self.dur}, Coeff:{self.coeff} (Stopalt:{self.stopalt})'
+            return f'Rate:{self.rate}, Type:dur, Dur:{self.dur}, Coeff:{self.coeff} (Stopalt:{self.stopalt})'
 
 class StaticTarget():
     '''

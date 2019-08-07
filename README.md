@@ -9,7 +9,7 @@ This package provides an objected oriented client interface and accession utilit
 
 To install, run `pip3 install habsim` and include with `import habsim`. All classes and subpackages are imported in the package-level namespace. Unfortunately, Python 2 is not supported. For method-level documentation, use `help(...)` to view the docstrings.
 
-A note about timestamps: this package manipulates UNIX timestamps extracted from user-supplied datetime objects. When you create a datetime object, its timestamp() method returns as if the datetime is in the local time zone of your machine --- this package expects such behavior. You should not worry about converting your datetime object to UTC time --- doing so may cause unexpected behavior.
+A note about timestamps: this package manipulates UNIX timestamps extracted from user-supplied datetime objects. When you create a datetime object, its `timestamp()` method returns as if the datetime is in the local time zone of your machine --- this package expects such behavior. You should not worry about converting your datetime object to UTC time --- doing so may cause unexpected behavior.
 
 ### Classes
 For usage example, see section below.
@@ -17,7 +17,7 @@ For usage example, see section below.
 - `Segment`             segment of a profile with a constant ascent or descent rate             
 - `Profile`             list of segments
 - `ControlledProfile`   optimizable profile expressed as altitude waypoints rather than a list of segments
-- `Prediction`          container class which holds a profile and calls the server for predictions
+- `Prediction`          container class which holds a profile, calls the server for predictions, and holds the resulting trajectory
 - `Trajectory`          single trajectory predicted for a profile or created by user from existing data
 - `StaticTarget`        a nonmoving target for trajectory optimization
 - `MovingTarget`        a moving target for trajectory optimization
@@ -47,11 +47,10 @@ descent = Segment(-3, stopalt=0)
 
 # Segments with a non-unity drift coefficient are supported.
 floating = Segment(0, dur=3, coeff=0.5)   
-profile = Profile(segments=[ascent, equilibrate descent, floating])
+profile = Profile(segments=[ascent, equilibrate, descent, floating])
 ```
 Specifying launch parameters and running the prediction:
 ```
-profile = Profile(segments=[ascent, equilibrate, descent, floating])
 time = datetime(2019, 4, 17, 22, 30)
 
 # Default time is current time
@@ -60,7 +59,7 @@ pred = Prediction(profile=profile,
                   launchtime=time)          
 
 # Parameters can also be passed in at runtime.
-prediction.run(model=1)                     
+traj = prediction.run(model=1).trajectory                     
 ```
 Saving predictions to file:
 ```
@@ -82,12 +81,8 @@ for i in range(N):
     pred.run(model=1)
     optimize_step(pred, hs.StaticTarget(40.7, -92.7), 20)
 ```
-The package can also be used to analyze trajectories:
+The package can also be used to analyze existing trajectories:
 ```
-# Gets trajectory from prediction
-traj = pred.trajectory
-
-# Makes trajectory from data
 traj = Trajectory(data=data)
 traj.length()            # Distance travelled in km
 traj.duration()          # Duration in hours
