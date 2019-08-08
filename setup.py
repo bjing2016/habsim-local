@@ -1,8 +1,13 @@
-from setuptools import setup
+import setuptools
 
-setup(name='habsim',
+with open("README.md", "r") as fh:
+      long_description = fh.read()
+
+setuptools.setup(name='habsim',
       version='0.1',
       description='Client interface to Stanford SSI HABSIM server',
       url='http://github.com/bjing2016/habsim_client',
       license='GNU GPLv3',
-      packages=['habsim'])
+      long_description=long_description,
+      long_description_content_type="text/markdown",
+      packages=setuptools.find_packages())
