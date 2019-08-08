@@ -1,5 +1,5 @@
 # HABSIM
-This package provides an objected oriented client interface and accession utilities to HABSIM, Stanford SSI's high altitude prediction server, at http://predict.stanfordssi.org. (See https://github.com/SSI-MC/habsim.) Main features include:
+This package provides an objected oriented client interface and accession utilities to HABSIM, Stanford Student Space Initiative's high-altitude balloon prediction server, at http://predict.stanfordssi.org. (See https://github.com/SSI-MC/habsim.) Main features include:
 
 - Custom flight profiles built from an arbitrary number of profile segments
 - API calls abstracted away in a Prediction class
@@ -12,7 +12,7 @@ To install, run `pip3 install habsim` and include with `import habsim`. All clas
 A note about timestamps: this package manipulates UNIX timestamps extracted from user-supplied datetime objects. When you create a datetime object, its `timestamp()` method returns as if the datetime is in the local time zone of your machine --- this package expects such behavior. You should not worry about converting your datetime object to UTC time --- doing so may cause unexpected behavior.
 
 ### Classes
-For usage example, see section below.
+For usage examples, see section below.
 
 - `Segment`             segment of a profile with a constant ascent or descent rate             
 - `Profile`             list of segments
@@ -33,7 +33,7 @@ Provides data accession and common calculation utilies for both client and inter
 - `wind` returns the wind data for a certain time, location, and elevation for a specific model.
 
 ### Subpackage `ioutil`
-This package primarily exports a `WebPlot` class which can plot an arbitrary number of multi-segment trajectories on an HTML OpenStreetMap interface for in-browser viewing. For usage, see below.
+This package primarily exports a `WebPlot` class which can plot an arbitrary number of multi-segment trajectories on an HTML OpenStreetMap interface for in-browser viewing. For sample usage, see below. For complete documentation, see the docstrings.
 
 ### Usage
 Constructing a profile:
