@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 setuptools.setup(name='habsim',
       version='0.1',
       description='Client interface to Stanford SSI HABSIM server',
-      url='http://github.com/bjing2016/habsim_client',
+      url='http://github.com/stanford-ssi/habsim_client',
       license='GNU GPLv3',
       long_description=long_description,
       long_description_content_type="text/markdown",
