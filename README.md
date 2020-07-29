@@ -1,5 +1,6 @@
 # HABSIM
-This package provides an objected oriented client interface and accession utilities to HABSIM, Stanford Student Space Initiative's high-altitude balloon prediction server, at http://predict.stanfordssi.org. (See https://github.com/SSI-MC/habsim.) Main features include:
+
+This package provides an objected oriented client interface and accession utilities to HABSIM, Stanford SSI's high altitude prediction server, at http://habsim.org. (See https://github.com/SSI-MC/habsim.) Main features include:
 
 - Custom flight profiles built from an arbitrary number of profile segments
 - API calls abstracted away in a Prediction class
