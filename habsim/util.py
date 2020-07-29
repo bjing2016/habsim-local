@@ -5,28 +5,28 @@ import urllib
 import os
 from datetime import datetime, timezone
 
-URL = "http://predict.stanfordssi.org"
+ROOT_URL = "http://habsim.org"
 EARTH_RADIUS = 6371.0
 
 def checkElev(launchsite):
     '''
     Returns true if the launch site is above ground. Only works in areas which have elevation data.
     '''
-    return launchsite.elev > getElev(launchsite.coords)
+    return launchsite.elev >= getElev(launchsite.coords)
 
 def getElev(coords):
     '''
     Fetches ground elevation from the server. Pass in a tuple (lat, lon)
     '''
     lat, lon = coords
-    elev = requests.get(URL + f"/elev?lat={lat}&lon={lon}").text
+    elev = requests.get(ROOT_URL + f"/elev?lat={lat}&lon={lon}").text
     return float(elev)
 
 def whichgefs():
     '''
     Returns GEFS run timestamp
     '''
-    return requests.get(url=URL+"/which").text
+    return requests.get(url=ROOT_URL+"/which").text
     
 def checkServer():
     '''
@@ -35,17 +35,19 @@ def checkServer():
     which = whichgefs()
     if which == "Unavailable":        
         print("Server live. Wind data temporarily unavailable.")
+        return False
     else:
         print("Server live with GEFS run " + which)
-        status = requests.get(URL+"/status").text
+        status = requests.get(ROOT_URL+"/status").text
         if status != "Ready":
             print(status)
+        return True
 
 def predict(timestamp, lat, lon, alt, drift_coeff, model, rate, dur, step):
     '''
     You should not need to call this method. Use the Prediction class instead.
     '''
-    URL = 'https://predict.stanfordssi.org/singlepredict?&timestamp={}&lat={}&lon={}&alt={}&coeff={}&dur={}&step={}&model={}&rate={}'\
+    URL = ROOT_URL+'/singlepredict?&timestamp={}&lat={}&lon={}&alt={}&coeff={}&dur={}&step={}&model={}&rate={}'\
         .format(timestamp, lat, lon, alt, drift_coeff, dur, step, model, rate)
     return json.load(urllib.request.urlopen(URL))
 
@@ -165,7 +167,7 @@ def average_wind(time, lat, lon, alt):
     '''
     time = time.timestamp()
     time = datetime.utcfromtimestamp(time)
-    URL = 'https://predict.stanfordssi.org/windensemble?&yr={}&mo={}&day={}&hr={}&mn={}&lat={}&lon={}&alt={}'\
+    URL = ROOT_URL+'/windensemble?&yr={}&mo={}&day={}&hr={}&mn={}&lat={}&lon={}&alt={}'\
         .format(time.year, time.month, time.day, time.hour, time.minute, lat, lon, alt)
     tmp = urllib.request.urlopen(URL)
     ulist, vlist, __, __ = list(json.load(tmp))
@@ -185,7 +187,7 @@ def wind(time, lat, lon, alt, model):
     '''
     time = time.timestamp()
     time = datetime.utcfromtimestamp(time)
-    URL = 'https://predict.stanfordssi.org/wind?&yr={}&mo={}&day={}&hr={}&mn={}&lat={}&lon={}&alt={}&model={}'\
+    URL = ROOT_URL+'/wind?&yr={}&mo={}&day={}&hr={}&mn={}&lat={}&lon={}&alt={}&model={}'\
         .format(time.year, time.month, time.day, time.hour, time.minute, lat, lon, alt, model)
     tmp = urllib.request.urlopen(URL)
     return list(json.load(tmp))

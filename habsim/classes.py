@@ -37,7 +37,7 @@ class Prediction:
     
     def split(self):
         '''
-        Splits and retuurns the Trajectory into segments based on the Profile.
+        Splits and returns the Trajectory into segments based on the Profile.
         '''
         if self.trajectory == None:
             raise Exception("No trajectory to split")
@@ -50,7 +50,7 @@ class Prediction:
         to the Prediction object will override the launch altitude, if any, set in the 
         Profile object.
 
-        The Trajectory will be stored in the Preidction object as its Trajectory field. Returns self (the Prediction object).
+        The Trajectory will be stored in the Prediction object as its Trajectory field. Returns self (the Prediction object).
         '''
         self.trajectory = Trajectory()
         if step != None:
@@ -89,7 +89,7 @@ class Prediction:
             if alts[i] > 31000:
                 print("Warning: model inaccurate above 31km.")
             self.trajectory.append(newsegment)
-            if len(newsegment) is not math.ceil(durs[i] * 3600 / self.step) + 1:
+            if len(newsegment) != math.ceil(durs[i] * 3600 / self.step) + 1:
                 if i is len(rates)-1:
                     print("Warning: early termination of last profile segment.")
                 else:
@@ -184,7 +184,7 @@ class ControlledProfile:
         self.dur = dur
         self.interval = interval
     
-    def initialize(self, step, lower, upper, seed=[]):
+    def initialize(self, step, lower, upper, seed=[0]):
             
         '''
         Initializes a list of waypoints beginning with seed, and then performing a Gaussian
@@ -200,7 +200,7 @@ class ControlledProfile:
                 self[i] = upper
             i += 1
 
-    def limit(self, lower, upper, start):
+    def limit(self, lower, upper, start=0):
         '''
         Trims the profile such that any waypoints, starting with index start,
         below lower or above upper are reassigned to be equal to lower and upper, respecitively.
@@ -400,12 +400,15 @@ class MovingTarget():
         '''
         Interpolates the waypoints to the specified time.
         '''
+        if time == self.times[-1]:
+            return self.lats[-1], self.lons[-1]
         if time >= self.times[-1]:
-            raise Exception("Target location not specified at trajectory end time.")
+            raise Exception("Target location not specified at given time.")
         elif time < self.times[0]:
-            raise Exception("Target location not specified at launch time.")
-        idx = bisect.bisect_left(self.times, time)
-        mod = (time-self.times[idx])/(self.times[idx+1]-self.times[idx])
-        lat = (1-mod) * self.lats[idx] + mod * self.lats[idx+1]
-        lon = (1-mod) * self.lons[idx] + mod * self.lons[idx+1]
-        return lat, lon
+            raise Exception("Target location not specified at given time.")
+        else:
+            idx = bisect.bisect_left(self.times, time)
+            mod = (time-self.times[idx-1])/(self.times[idx]-self.times[idx-1])
+            lat = (1-mod) * self.lats[idx-1] + mod * self.lats[idx]
+            lon = (1-mod) * self.lons[idx-1] + mod * self.lons[idx]
+            return lat, lon
