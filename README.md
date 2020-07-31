@@ -6,13 +6,13 @@ This package provides an objected oriented client interface and accession utilit
 - API calls abstracted away in a Prediction class
 - Wind and elevation data accession utilities
 - WebPlot class, which permits writing of trajectories on an OpenStreetMap layer for in-browser viewing
-- Trajectory optimization utilities for chasing a static or moving target
+- Trajectory optimization utilities for chasing a StaticTarget or a MovingTarget
 
 To install, run `pip3 install habsim` and include with `import habsim`. All classes and subpackages are imported in the package-level namespace. Unfortunately, Python 2 is not supported. For method-level documentation, use `help(...)` to view the docstrings.
 
 A note about timestamps: this package manipulates UNIX timestamps extracted from user-supplied datetime objects. When you create a datetime object, its `timestamp()` method returns as if the datetime is in the local time zone of your machine --- this package expects such behavior. You should not worry about converting your datetime object to UTC time --- doing so may cause unexpected behavior.
 
-`pytest` is used as the testing framework.
+`pytest` is used as the testing framework. To run tests, clone this repository and run `pytest` in the base directory.
 
 ### Classes
 For usage examples, see section below.
